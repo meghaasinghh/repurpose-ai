@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import ContentForm, { GenerationResult } from "./ContentForm";
+import OutputDisplay from "./OutputDisplay";
 
 export default function DashboardClient({ userName }: { userName: string }) {
   const [result, setResult] = useState<GenerationResult | null>(null);
@@ -35,11 +36,9 @@ export default function DashboardClient({ userName }: { userName: string }) {
         </div>
 
         {result && (
-          <div className="mt-8 rounded-xl bg-white p-6 shadow-sm">
+          <div className="mt-8">
             <h3 className="mb-4 text-lg font-bold text-gray-900">Generated Content</h3>
-            <pre className="whitespace-pre-wrap text-sm text-gray-700">
-              {JSON.stringify(result.outputs, null, 2)}
-            </pre>
+            <OutputDisplay result={result} />
           </div>
         )}
       </main>
