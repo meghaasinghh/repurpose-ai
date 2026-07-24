@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
+import Link from "next/link";
 import ContentForm, { GenerationResult } from "./ContentForm";
 import OutputDisplay from "./OutputDisplay";
 
@@ -14,6 +15,9 @@ export default function DashboardClient({ userName }: { userName: string }) {
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900">RepurposeAI</h1>
           <div className="flex items-center gap-4">
+            <Link href="/history" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              History
+            </Link>
             <span className="text-sm text-gray-600">Hi, {userName}</span>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
