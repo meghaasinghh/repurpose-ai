@@ -18,9 +18,16 @@ interface HistoryItem {
 }
 
 const INPUT_TYPE_LABELS: Record<string, string> = {
-  youtube: "YouTube",
-  blog: "Blog",
-  audio: "Audio",
+  youtube: "🎥 YouTube",
+  blog: "📝 Blog",
+  audio: "🎙️ Audio",
+};
+
+const TONE_LABELS: Record<string, string> = {
+  professional: "Professional",
+  casual: "Casual",
+  storytelling: "Storytelling",
+  genz: "Gen-Z",
 };
 
 export default function HistoryClient() {
@@ -46,74 +53,155 @@ export default function HistoryClient() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="border-b bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <Link href="/dashboard" className="text-lg font-bold text-gray-900">
-            RepurposeAI
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      {/* Navbar */}
+      <nav style={{
+        background: "var(--surface)", borderBottom: "1px solid var(--border)",
+        padding: "0 32px", height: 60,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        position: "sticky", top: 0, zIndex: 50
+      }}>
+        <Link href="/" style={{ textDecoration: "none" }}>
+          <span className="font-display" style={{ fontSize: 20, fontWeight: 700, color: "var(--text)" }}>
+            Repurpose<span style={{ color: "var(--primary)" }}>AI</span>
+          </span>
+        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <Link href="/dashboard" style={{
+            fontSize: 14, fontWeight: 500, color: "var(--text-muted)", textDecoration: "none"
+          }}>
+            New content
           </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-sm font-medium text-gray-600 hover:text-gray-900">
-              New content
-            </Link>
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              Log out
-            </button>
-          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            style={{
+              fontSize: 13, fontWeight: 500, color: "var(--text-muted)",
+              background: "var(--surface-2)", border: "1px solid var(--border)",
+              borderRadius: 8, padding: "6px 14px", cursor: "pointer"
+            }}
+          >
+            Log out
+          </button>
         </div>
       </nav>
 
-      <main className="mx-auto max-w-5xl px-6 py-10">
-        <h2 className="text-2xl font-bold text-gray-900">Your content history</h2>
-
-        {loading && <p className="mt-4 text-sm text-gray-600">Loading...</p>}
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-
-        {!loading && !error && items.length === 0 && (
-          <p className="mt-4 text-sm text-gray-600">
-            No content yet.{" "}
-            <Link href="/dashboard" className="text-indigo-600 hover:underline">
-              Create your first piece of content
-            </Link>
-            .
+      <main style={{ maxWidth: 860, margin: "0 auto", padding: "48px 24px" }}>
+        <div style={{ marginBottom: 32 }}>
+          <h1 className="font-display" style={{
+            fontSize: 32, fontWeight: 700, color: "var(--text)", marginBottom: 8
+          }}>
+            Content history
+          </h1>
+          <p style={{ fontSize: 15, color: "var(--text-muted)" }}>
+            All your past generations, saved and ready to reuse.
           </p>
-        )}
-
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {items.map((item) => (
-            <button
-              key={item._id}
-              onClick={() => setSelected(item)}
-              className="rounded-xl bg-white p-4 text-left shadow-sm hover:shadow-md"
-            >
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                  {INPUT_TYPE_LABELS[item.inputType] || item.inputType}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {new Date(item.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-              <h3 className="mt-2 truncate text-sm font-medium text-gray-900">{item.title}</h3>
-              <p className="mt-1 text-xs text-gray-500">
-                {item.outputs.length} platform{item.outputs.length !== 1 ? "s" : ""} generated
-              </p>
-            </button>
-          ))}
         </div>
 
+        {loading && (
+          <p style={{ fontSize: 14, color: "var(--text-muted)" }}>Loading...</p>
+        )}
+
+        {error && (
+          <div style={{
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+            borderRadius: 8, padding: "12px 16px", fontSize: 14, color: "#DC2626"
+          }}>
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && items.length === 0 && (
+          <div style={{
+            textAlign: "center", padding: "60px 24px",
+            background: "var(--surface)", border: "1px solid var(--border)",
+            borderRadius: 16
+          }}>
+            <p style={{ fontSize: 32, marginBottom: 12 }}>📭</p>
+            <p style={{ fontSize: 15, color: "var(--text-muted)", marginBottom: 20 }}>
+              No content generated yet.
+            </p>
+            <Link href="/dashboard" style={{
+              background: "var(--primary)", color: "#fff", textDecoration: "none",
+              padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600
+            }}>
+              Create your first piece →
+            </Link>
+          </div>
+        )}
+
+        {/* History grid */}
+        {items.length > 0 && !selected && (
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16
+          }}>
+            {items.map((item) => (
+              <button
+                key={item._id}
+                onClick={() => setSelected(item)}
+                style={{
+                  background: "var(--surface)", border: "1px solid var(--border)",
+                  borderRadius: 12, padding: 20, textAlign: "left", cursor: "pointer",
+                  transition: "border-color 0.15s"
+                }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--primary)")}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                  <span style={{
+                    fontSize: 12, fontWeight: 500, color: "var(--text-muted)",
+                    background: "var(--surface-2)", border: "1px solid var(--border)",
+                    borderRadius: 6, padding: "3px 10px"
+                  }}>
+                    {INPUT_TYPE_LABELS[item.inputType] || item.inputType}
+                  </span>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <h3 style={{
+                  fontSize: 14, fontWeight: 600, color: "var(--text)",
+                  marginBottom: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
+                }}>
+                  {item.title}
+                </h3>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    {item.outputs.length} platform{item.outputs.length !== 1 ? "s" : ""}
+                  </span>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    {TONE_LABELS[item.tone] || item.tone}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Selected item detail view */}
         {selected && (
-          <div className="mt-8">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">{selected.title}</h3>
+          <div>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: 24, padding: "16px 20px",
+              background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12
+            }}>
+              <div>
+                <h2 className="font-display" style={{ fontSize: 18, fontWeight: 700, color: "var(--text)" }}>
+                  {selected.title}
+                </h2>
+                <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
+                  {INPUT_TYPE_LABELS[selected.inputType]} · {TONE_LABELS[selected.tone]} · {new Date(selected.createdAt).toLocaleDateString()}
+                </p>
+              </div>
               <button
                 onClick={() => setSelected(null)}
-                className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                style={{
+                  fontSize: 13, fontWeight: 500, color: "var(--text-muted)",
+                  background: "var(--surface-2)", border: "1px solid var(--border)",
+                  borderRadius: 8, padding: "6px 14px", cursor: "pointer"
+                }}
               >
-                Close
+                ← Back
               </button>
             </div>
             <OutputDisplay result={{ contentId: selected._id, outputs: selected.outputs }} />

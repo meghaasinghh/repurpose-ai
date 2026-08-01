@@ -51,15 +51,13 @@ export default function ContentForm({ onResult }: ContentFormProps) {
     setError("");
 
     if (platforms.length === 0) {
-      setError("Please select at least one platform to generate content for.");
+      setError("Please select at least one platform.");
       return;
     }
-
     if (inputType === "audio" && !audioFile) {
-      setError("Please select an audio file to upload.");
+      setError("Please select an audio file.");
       return;
     }
-
     if (inputType !== "audio" && !urlValue.trim()) {
       setError(`Please enter a ${inputType === "youtube" ? "YouTube" : "blog"} URL.`);
       return;
@@ -68,7 +66,6 @@ export default function ContentForm({ onResult }: ContentFormProps) {
     setLoading(true);
 
     try {
-      // Step 1: extract transcript based on input type
       setStatusMessage("Extracting content...");
       let transcript = "";
       let title = "";
@@ -100,10 +97,7 @@ export default function ContentForm({ onResult }: ContentFormProps) {
       } else if (inputType === "audio" && audioFile) {
         const formData = new FormData();
         formData.append("file", audioFile);
-        const res = await fetch("/api/extract/audio", {
-          method: "POST",
-          body: formData,
-        });
+        const res = await fetch("/api/extract/audio", { method: "POST", body: formData });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to transcribe audio");
         transcript = data.transcript;
@@ -111,29 +105,15 @@ export default function ContentForm({ onResult }: ContentFormProps) {
         sourceFileName = audioFile.name;
       }
 
-      if (!transcript) {
-        throw new Error("No content could be extracted. Please try a different input.");
-      }
+      if (!transcript) throw new Error("No content could be extracted.");
 
-      // Step 2: generate content for selected platforms
-      setStatusMessage(
-        `Generating content for ${platforms.length} platform${platforms.length > 1 ? "s" : ""}... this may take ${platforms.length * 10}-${platforms.length * 20} seconds.`
-      );
+      setStatusMessage(`Generating for ${platforms.length} platform${platforms.length > 1 ? "s" : ""}... (${platforms.length * 10}–${platforms.length * 20}s)`);
 
       const genRes = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript,
-          inputType,
-          tone,
-          title,
-          sourceUrl,
-          sourceFileName,
-          platforms,
-        }),
+        body: JSON.stringify({ transcript, inputType, tone, title, sourceUrl, sourceFileName, platforms }),
       });
-
       const genData = await genRes.json();
       if (!genRes.ok) throw new Error(genData.error || "Failed to generate content");
 
@@ -147,114 +127,154 @@ export default function ContentForm({ onResult }: ContentFormProps) {
     }
   }
 
+  const inputTypeButtons: { type: InputType; label: string }[] = [
+    { type: "youtube", label: "🎥 YouTube" },
+    { type: "blog", label: "📝 Blog URL" },
+    { type: "audio", label: "🎙️ Audio File" },
+  ];
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 rounded-xl bg-white p-6 shadow-sm">
-      {/* Input type selector */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700">Input type</label>
-        <div className="flex gap-2">
-          {(["youtube", "blog", "audio"] as InputType[]).map((type) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => setInputType(type)}
-              className={`rounded-md px-4 py-2 text-sm font-medium ${
-                inputType === type
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {type === "youtube" ? "YouTube" : type === "blog" ? "Blog URL" : "Audio File"}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div style={{
+      background: "var(--surface)", border: "1px solid var(--border)",
+      borderRadius: 16, padding: 32
+    }}>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 28 }}>
 
-      {/* Conditional input field */}
-      {inputType === "audio" ? (
+        {/* Input type */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">Audio file</label>
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
-            className="block w-full text-sm text-gray-600"
-          />
-        </div>
-      ) : (
-        <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
-            {inputType === "youtube" ? "YouTube URL" : "Blog URL"}
+          <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Input source
           </label>
-          <input
-            type="url"
-            value={urlValue}
-            onChange={(e) => setUrlValue(e.target.value)}
-            placeholder={
-              inputType === "youtube"
-                ? "https://www.youtube.com/watch?v=..."
-                : "https://example.com/blog-post"
-            }
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          />
+          <div style={{ display: "flex", gap: 8 }}>
+            {inputTypeButtons.map(({ type, label }) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setInputType(type)}
+                style={{
+                  padding: "9px 18px", borderRadius: 8, fontSize: 13, fontWeight: 500,
+                  cursor: "pointer", transition: "all 0.15s",
+                  background: inputType === type ? "var(--primary)" : "var(--surface-2)",
+                  color: inputType === type ? "#fff" : "var(--text-muted)",
+                  border: inputType === type ? "1px solid var(--primary)" : "1px solid var(--border)",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
 
-      {/* Tone picker */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700">Tone</label>
-        <select
-          value={tone}
-          onChange={(e) => setTone(e.target.value as Tone)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        >
-          {(Object.keys(TONE_LABELS) as Tone[]).map((t) => (
-            <option key={t} value={t}>
-              {TONE_LABELS[t]}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Platform checkboxes */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700">
-          Generate for platforms
-        </label>
-        <div className="flex flex-wrap gap-3">
-          {(Object.keys(PLATFORM_LABELS) as Platform[]).map((p) => (
-            <label
-              key={p}
-              className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm ${
-                platforms.includes(p)
-                  ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                  : "border-gray-300 text-gray-700"
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={platforms.includes(p)}
-                onChange={() => togglePlatform(p)}
-                className="sr-only"
-              />
-              {PLATFORM_LABELS[p]}
+        {/* URL / File input */}
+        {inputType === "audio" ? (
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Audio file
             </label>
-          ))}
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
+              style={{ fontSize: 14, color: "var(--text-muted)" }}
+            />
+          </div>
+        ) : (
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {inputType === "youtube" ? "YouTube URL" : "Blog URL"}
+            </label>
+            <input
+              type="url"
+              value={urlValue}
+              onChange={(e) => setUrlValue(e.target.value)}
+              placeholder={inputType === "youtube" ? "https://www.youtube.com/watch?v=..." : "https://example.com/blog-post"}
+              style={{
+                width: "100%", background: "var(--surface-2)", border: "1px solid var(--border)",
+                borderRadius: 8, padding: "11px 14px", fontSize: 14, color: "var(--text)",
+                outline: "none"
+              }}
+            />
+          </div>
+        )}
+
+        {/* Tone + Platforms row */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Tone
+            </label>
+            <select
+              value={tone}
+              onChange={(e) => setTone(e.target.value as Tone)}
+              style={{
+                width: "100%", background: "var(--surface-2)", border: "1px solid var(--border)",
+                borderRadius: 8, padding: "11px 14px", fontSize: 14, color: "var(--text)",
+                outline: "none", cursor: "pointer"
+              }}
+            >
+              {(Object.keys(TONE_LABELS) as Tone[]).map((t) => (
+                <option key={t} value={t}>{TONE_LABELS[t]}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Platforms
+            </label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {(Object.keys(PLATFORM_LABELS) as Platform[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => togglePlatform(p)}
+                  style={{
+                    padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500,
+                    cursor: "pointer",
+                    background: platforms.includes(p) ? "rgba(124,58,237,0.1)" : "var(--surface-2)",
+                    color: platforms.includes(p) ? "var(--primary)" : "var(--text-muted)",
+                    border: platforms.includes(p) ? "1px solid var(--primary)" : "1px solid var(--border)",
+                  }}
+                >
+                  {PLATFORM_LABELS[p]}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
 
-      {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-      {statusMessage && (
-        <div className="rounded-md bg-indigo-50 p-3 text-sm text-indigo-700">{statusMessage}</div>
-      )}
+        {error && (
+          <div style={{
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+            borderRadius: 8, padding: "12px 16px", fontSize: 14, color: "#DC2626"
+          }}>
+            {error}
+          </div>
+        )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-      >
-        {loading ? "Working..." : "Generate Content"}
-      </button>
-    </form>
+        {statusMessage && (
+          <div style={{
+            background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)",
+            borderRadius: 8, padding: "12px 16px", fontSize: 14, color: "var(--primary)"
+          }}>
+            ⏳ {statusMessage}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: "100%", background: "var(--primary)", color: "#fff",
+            border: "none", borderRadius: 10, padding: "14px",
+            fontSize: 15, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.7 : 1,
+            boxShadow: "0 0 20px var(--primary-glow)"
+          }}
+        >
+          {loading ? "Working on it..." : "Generate Content →"}
+        </button>
+      </form>
+    </div>
   );
 }

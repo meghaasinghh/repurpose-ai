@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { GenerationResult, Platform } from "./ContentForm";
 
 const PLATFORM_LABELS: Record<Platform, string> = {
@@ -11,30 +11,17 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   email: "Email Newsletter",
 };
 
-const PLATFORM_COLORS: Record<Platform, string> = {
-  twitter: "bg-sky-50 text-sky-700 border-sky-200",
-  linkedin: "bg-blue-50 text-blue-700 border-blue-200",
-  instagram: "bg-pink-50 text-pink-700 border-pink-200",
-  blog: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  email: "bg-amber-50 text-amber-700 border-amber-200",
+const PLATFORM_EMOJI: Record<Platform, string> = {
+  twitter: "🐦",
+  linkedin: "💼",
+  instagram: "📸",
+  blog: "✍️",
+  email: "📧",
 };
 
-function OutputCard({
-  platform,
-  content,
-  delayMs,
-}: {
-  platform: Platform;
-  content: string;
-  delayMs: number;
-}) {
+function OutputCard({ platform, content }: { platform: Platform; content: string }) {
   const [copied, setCopied] = useState(false);
-  const [flipped, setFlipped] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setFlipped(true), delayMs);
-    return () => clearTimeout(timer);
-  }, [delayMs]);
+  const isFailed = content.startsWith("Generation failed");
 
   async function handleCopy() {
     await navigator.clipboard.writeText(content);
@@ -42,97 +29,61 @@ function OutputCard({
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const isFailed = content.startsWith("Generation failed");
-
   return (
-    <div className="flip-card-container" style={{ perspective: "1500px" }}>
-      <div className={`flip-card-inner ${flipped ? "flipped" : ""}`}>
-        {/* Front face — shown briefly before flip */}
-        <div className="flip-card-face flip-card-front">
-          <div className="flex h-full flex-col items-center justify-center rounded-xl bg-white p-6 shadow-sm">
-            <span
-              className={`rounded-full border px-4 py-1.5 text-sm font-medium ${PLATFORM_COLORS[platform]}`}
-            >
-              {PLATFORM_LABELS[platform]}
-            </span>
-          </div>
+    <div style={{
+      background: "var(--surface)", border: "1px solid var(--border)",
+      borderRadius: 12, overflow: "hidden"
+    }}>
+      {/* Card header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "14px 20px", borderBottom: "1px solid var(--border)",
+        background: "var(--surface-2)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 16 }}>{PLATFORM_EMOJI[platform]}</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+            {PLATFORM_LABELS[platform]}
+          </span>
         </div>
-
-        {/* Back face — actual content, visible after flip */}
-        <div className="flip-card-face flip-card-back">
-          <div className="rounded-xl bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <span
-                className={`rounded-full border px-3 py-1 text-xs font-medium ${PLATFORM_COLORS[platform]}`}
-              >
-                {PLATFORM_LABELS[platform]}
-              </span>
-              {!isFailed && (
-                <button
-                  onClick={handleCopy}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                >
-                  {copied ? "Copied!" : "Copy"}
-                </button>
-              )}
-            </div>
-
-            {isFailed ? (
-              <p className="text-sm text-red-600">{content}</p>
-            ) : (
-              <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-                {content}
-              </div>
-            )}
-          </div>
-        </div>
+        {!isFailed && (
+          <button
+            onClick={handleCopy}
+            style={{
+              fontSize: 12, fontWeight: 500, padding: "5px 12px",
+              borderRadius: 6, cursor: "pointer",
+              background: copied ? "rgba(124,58,237,0.1)" : "var(--surface)",
+              color: copied ? "var(--primary)" : "var(--text-muted)",
+              border: "1px solid var(--border)"
+            }}
+          >
+            {copied ? "✓ Copied" : "Copy"}
+          </button>
+        )}
       </div>
 
-      <style jsx>{`
-        .flip-card-container {
-          position: relative;
-          width: 100%;
-        }
-        .flip-card-inner {
-          position: relative;
-          width: 100%;
-          transition: transform 0.6s;
-          transform-style: preserve-3d;
-        }
-        .flip-card-inner.flipped {
-          transform: rotateY(180deg);
-        }
-        .flip-card-face {
-          backface-visibility: hidden;
-        }
-        .flip-card-front {
-          position: absolute;
-          inset: 0;
-          height: 100%;
-          min-height: 120px;
-        }
-        .flip-card-back {
-          transform: rotateY(180deg);
-          position: relative;
-        }
-        .flip-card-inner:not(.flipped) .flip-card-back {
-          visibility: hidden;
-        }
-      `}</style>
+      {/* Card content */}
+      <div style={{ padding: "20px", maxHeight: 400, overflowY: "auto" }}>
+        {isFailed ? (
+          <p style={{ fontSize: 14, color: "#DC2626" }}>{content}</p>
+        ) : (
+          <p style={{
+            fontSize: 14, lineHeight: 1.8, color: "var(--text)",
+            whiteSpace: "pre-wrap"
+          }}>
+            {content}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
 
 export default function OutputDisplay({ result }: { result: GenerationResult }) {
   return (
-    <div className="space-y-4">
-      {result.outputs.map((output, index) => (
-        <OutputCard
-          key={output.platform}
-          platform={output.platform}
-          content={output.content}
-          delayMs={300 + index * 200}
-        />
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {result.outputs.map((output) => (
+        <OutputCard key={output.platform} platform={output.platform} content={output.content} />
       ))}
     </div>
   );
