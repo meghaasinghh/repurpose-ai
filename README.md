@@ -31,7 +31,7 @@ An AI-powered content repurposing platform that transforms a single YouTube vide
 | Audio Transcription | AssemblyAI SDK |
 | YouTube Extraction | `youtube-transcript` |
 | Blog Scraping | Cheerio + Axios |
-| Deployment | Vercel |
+| Deployment | Render |
 
 ## 🚀 Getting Started
 
@@ -119,7 +119,6 @@ src/
 - [ ] Freemium billing tiers (Stripe integration)
 - [ ] Background job queue (Redis/BullMQ) for long-running tasks
 - [ ] API access for businesses
-- [ ] UI redesign and polish pass
 
 ## 🔑 Environment Variables
 
