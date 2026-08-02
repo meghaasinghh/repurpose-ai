@@ -4,7 +4,7 @@ An AI-powered content repurposing platform that transforms a single YouTube vide
 
 ![RepurposeAI Dashboard](https://via.placeholder.com/1200x630/6366f1/ffffff?text=RepurposeAI)
 
-🌐 **Live Demo:** [repurpose-ai-c5ks.onrender.com](https://repurpose-ai-c5ks.onrender.com)
+🌐 **Live Demo:** [repurpose-ai-vzam.onrender.com](https://repurpose-ai-vzam.onrender.com)
 
 ## ✨ Features
 
